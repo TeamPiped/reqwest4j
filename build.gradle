@@ -1,0 +1,56 @@
+plugins {
+    id "java"
+    id "maven-publish"
+    id "fr.stardustenterprises.rust.importer" version "3.2.5"
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    rust(project(":reqwest-jni"))
+}
+
+// javac -h
+tasks.register('generateJniHeaders', JavaCompile) {
+    classpath = sourceSets.main.compileClasspath
+    destinationDir file("${buildDir}/generated/jni")
+    source = sourceSets.main.java
+    options.compilerArgs += [
+            '-h', file("${buildDir}/generated/jni"),
+            '-d', file("${buildDir}/generated/jni-classes"),
+    ]
+    doLast {
+        delete file("${buildDir}/generated/jni-classes")
+    }
+}
+
+rustImport {
+    baseDir = "/META-INF/natives"
+    layout = "hierarchical"
+}
+
+group = 'rocks.kavin.reqwest4j'
+version = '1.0'
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/TeamPiped/reqwest4j")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            from(components.java)
+        }
+    }
+}

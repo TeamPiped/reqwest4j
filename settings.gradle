@@ -1,0 +1,2 @@
+include 'reqwest-jni'
+rootProject.name = 'reqwest4j'

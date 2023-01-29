@@ -56,6 +56,33 @@ publishing {
     publications {
         ossrh(MavenPublication) {
             from(components.java)
+            pom {
+                name = 'reqwest4j'
+                packaging 'jar'
+                description = 'Java bindings to Reqwest with jni-rs for use in Piped\'s backend!'
+                url = 'https://github.com/TeamPiped/reqwest4j'
+
+                scm {
+                    connection = 'scm:git:git://github.com/TeamPiped/reqwest4j.git'
+                    developerConnection = 'scm:git:https://github.com/TeamPiped/reqwest4j.git'
+                    url = 'https://github.com/TeamPiped/reqwest4j'
+                }
+
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://raw.githubusercontent.com/TeamPiped/reqwest4j/main/LICENSE'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'kavin'
+                        name = 'Kavin'
+                        email = 'kavin@kavin.rocks'
+                    }
+                }
+            }
         }
     }
 }

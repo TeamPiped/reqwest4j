@@ -45,7 +45,7 @@ targetCompatibility = JavaVersion.VERSION_17
 publishing {
     repositories {
         maven {
-            name = "Sonatype OSS"
+            name = "sonatypeStaging"
             url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
             credentials {
                 username = project.findProperty("ossrh.user") ?: System.getenv("USERNAME")

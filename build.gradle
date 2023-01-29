@@ -45,16 +45,16 @@ targetCompatibility = JavaVersion.VERSION_17
 publishing {
     repositories {
         maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/TeamPiped/reqwest4j")
+            name = "Sonatype OSS"
+            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
             credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+                username = project.findProperty("ossrh.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("ossrh.pass") ?: System.getenv("PASSWORD")
             }
         }
     }
     publications {
-        gpr(MavenPublication) {
+        ossrh(MavenPublication) {
             from(components.java)
         }
     }

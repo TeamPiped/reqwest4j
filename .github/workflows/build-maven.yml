@@ -2,10 +2,8 @@ name: Build and Publish on Maven
 
 on:
   push:
-    paths-ignore:
-      - "**.md"
-    branches:
-      - main
+    tags:
+      - '*'
 
 permissions:
   packages: write
@@ -16,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            reqwest-jni
       - run: cargo install cross
       - name: set up JDK
         uses: actions/setup-java@v3

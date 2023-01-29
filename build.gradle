@@ -32,7 +32,12 @@ rustImport {
     layout = "hierarchical"
 }
 
-group = 'rocks.kavin.reqwest4j'
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+group = 'rocks.kavin'
 version = '1.0'
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17

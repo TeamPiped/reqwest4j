@@ -25,8 +25,10 @@ jobs:
           distribution: temurin
           check-latest: true
           cache: "gradle"
+      - name: Save Private Key
+        run: echo -n "${{ secrets.MAVEN_GPG_PRIVATE_KEY }}" | base64 -d > secring.gpg
       - name: Run Build
-        run: ./gradlew publish
+        run: ./gradlew publish -Psigning.keyId=B4701DB2 -Psigning.password="${{ secrets.MAVEN_GPG_PASS }}" -Psigning.secretKeyRingFile=secring.gpg
         env:
           USERNAME: ${{ secrets.MAVEN_USERNAME }}
           PASSWORD: ${{ secrets.MAVEN_PASSWORD }}

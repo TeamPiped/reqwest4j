@@ -1,6 +1,7 @@
 plugins {
     id "java"
     id "maven-publish"
+    id "signing"
     id "fr.stardustenterprises.rust.importer" version "3.2.5"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
@@ -35,6 +36,10 @@ rustImport {
 java {
     withSourcesJar()
     withJavadocJar()
+}
+
+signing {
+    sign publishing.publications
 }
 
 group = 'rocks.kavin'

@@ -7,7 +7,6 @@ use lazy_static::lazy_static;
 use reqwest::{Client, Method, Url};
 use tokio::runtime::Runtime;
 
-
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
@@ -32,7 +31,16 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
 
     // set method, url, body, headers
     let method = Method::from_bytes(env.get_string(method).unwrap().to_bytes()).unwrap();
-    let url = Url::parse(&env.get_string(url).unwrap().to_str().unwrap()).unwrap();
+
+    let url = &env.get_string(url).unwrap();
+    let url = url.to_str();
+
+    if url.is_err() {
+        env.throw_new("java/lang/IllegalArgumentException", "Invalid URL provided, couldn't get string as UTF-8").unwrap();
+        return JObject::null().into_raw();
+    }
+
+    let url = Url::parse(url.unwrap()).unwrap();
     let body = env.convert_byte_array(body).unwrap_or_default();
     let headers: JMap = JMap::from_env(&env, headers).unwrap();
     let headers = headers.iter().unwrap().fold(HashMap::new(), |mut headers, (key, value)| {

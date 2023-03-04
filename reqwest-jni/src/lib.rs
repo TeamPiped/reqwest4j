@@ -7,10 +7,6 @@ use lazy_static::lazy_static;
 use reqwest::{Client, Method, Url};
 use tokio::runtime::Runtime;
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
-
 lazy_static! {
     static ref RUNTIME: Runtime = Runtime::new().unwrap();
     static ref CLIENT: Client = Client::builder()
@@ -100,15 +96,4 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
     ]).unwrap();
 
     response.into_raw()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
 }

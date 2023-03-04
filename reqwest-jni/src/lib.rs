@@ -80,7 +80,7 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
     let final_url = env.new_string(final_url).unwrap();
 
     let body = RUNTIME.block_on(async {
-        response.bytes().await.unwrap().to_vec()
+        response.bytes().await.unwrap_or_default().to_vec()
     });
 
 

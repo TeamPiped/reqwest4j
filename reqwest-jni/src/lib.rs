@@ -3,17 +3,17 @@ use std::collections::HashMap;
 use jni::JNIEnv;
 use jni::objects::{JClass, JMap, JObject, JString};
 use jni::sys::{jbyteArray, jobject};
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use reqwest::{Client, Method, Url};
 use tokio::runtime::Runtime;
 
-lazy_static! {
-    static ref RUNTIME: Runtime = Runtime::new().unwrap();
-    static ref CLIENT: Client = Client::builder()
+static RUNTIME: Lazy<Runtime> = Lazy::new(|| Runtime::new().unwrap());
+static CLIENT: Lazy<Client> = Lazy::new(||
+    Client::builder()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; rv:102.0) Gecko/20100101 Firefox/102.0")
         .build()
-        .unwrap();
-}
+        .unwrap()
+);
 
 #[no_mangle]
 pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(

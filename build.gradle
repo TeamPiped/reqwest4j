@@ -43,7 +43,7 @@ signing {
 }
 
 group = 'rocks.kavin'
-version = '1.0.4'
+version = '1.0.5'
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 

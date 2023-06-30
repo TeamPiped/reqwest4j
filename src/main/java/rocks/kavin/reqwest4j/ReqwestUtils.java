@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class ReqwestUtils {
 
@@ -34,7 +35,7 @@ public class ReqwestUtils {
         System.load(nativeFile.getAbsolutePath());
     }
 
-    public static native Response fetch(String url, String method, byte[] body,
-                                        Map<String, String> headers);
+    public static native CompletableFuture<Response> fetch(String url, String method, byte[] body,
+                                                          Map<String, String> headers);
 
 }

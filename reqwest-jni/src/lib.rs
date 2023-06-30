@@ -60,48 +60,67 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
         request.body(body)
     };
 
-    // send request
-    let response = RUNTIME.block_on(async {
-        request.send().await
+    // `JNIEnv` cannot be sent between threads safely
+    let jvm = env.get_java_vm().unwrap();
+
+    // create CompletableFuture
+    let _future = env.new_object("java/util/concurrent/CompletableFuture", "()V", &[]).unwrap();
+    let future = env.new_global_ref(&_future).unwrap();
+
+    RUNTIME.spawn_blocking(move || {
+        // send request
+        let response = RUNTIME.block_on(async {
+            request.send().await
+        });
+
+        let mut env = jvm.attach_current_thread().unwrap();
+
+        if let Err(error) = response {
+            let error = error.to_string();
+            let error = env.new_string(error).unwrap();
+            // create Exception
+            let exception = env.new_object("java/lang/Exception", "(Ljava/lang/String;)V", &[
+                (&error).into(),
+            ]).unwrap();
+            // pass error to CompletableFuture
+            env.call_method(future, "completeExceptionally", "(Ljava/lang/Throwable;)Z", &[(&exception).into()]).unwrap();
+            return ();
+        }
+
+        let response = response.unwrap();
+
+        // get response
+        let status = response.status().as_u16() as i32;
+
+        let headers = env.new_object("java/util/HashMap", "()V", &[]).unwrap();
+        let headers: JMap = JMap::from_env(&mut env, &headers).unwrap();
+
+        response.headers().iter().for_each(|(key, value)| {
+            let key = env.new_string(key.as_str()).unwrap();
+            let value = env.new_string(value.to_str().unwrap()).unwrap();
+            headers.put(&mut env, &JObject::from(key), &JObject::from(value)).unwrap();
+        });
+
+        let final_url = response.url().to_string();
+        let final_url = env.new_string(final_url).unwrap();
+
+        let body = RUNTIME.block_on(async {
+            response.bytes().await.unwrap_or_default().to_vec()
+        });
+
+        let body = env.byte_array_from_slice(&body).unwrap();
+
+        // return response to CompletableFuture
+        let response = env.new_object("rocks/kavin/reqwest4j/Response", "(ILjava/util/Map;[BLjava/lang/String;)V", &[
+            status.into(),
+            (&headers).into(),
+            (&body).into(),
+            (&final_url).into(),
+        ]).unwrap();
+
+        let future = future.as_obj();
+        env.call_method(future, "complete", "(Ljava/lang/Object;)Z", &[(&response).into()]).unwrap();
     });
 
-    if let Err(error) = response {
-        let error = error.to_string();
-        env.throw_new("java/lang/RuntimeException", error).unwrap();
-        return JObject::null().into_raw();
-    }
-
-    let response = response.unwrap();
-
-    // get response
-    let status = response.status().as_u16() as i32;
-
-    let headers = env.new_object("java/util/HashMap", "()V", &[]).unwrap();
-    let headers: JMap = JMap::from_env(&mut env, &headers).unwrap();
-
-    response.headers().iter().for_each(|(key, value)| {
-        let key = env.new_string(key.as_str()).unwrap();
-        let value = env.new_string(value.to_str().unwrap()).unwrap();
-        headers.put(&mut env, &JObject::from(key), &JObject::from(value)).unwrap();
-    });
-
-    let final_url = response.url().to_string();
-    let final_url = env.new_string(final_url).unwrap();
-
-    let body = RUNTIME.block_on(async {
-        response.bytes().await.unwrap_or_default().to_vec()
-    });
-
-
-    let body = env.byte_array_from_slice(&body).unwrap();
-
-    // return response
-    let response = env.new_object("rocks/kavin/reqwest4j/Response", "(ILjava/util/Map;[BLjava/lang/String;)V", &[
-        status.into(),
-        (&headers).into(),
-        (&body).into(),
-        (&final_url).into(),
-    ]).unwrap();
-
-    response.into_raw()
+    return _future.into_raw();
 }

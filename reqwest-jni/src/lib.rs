@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
 use jni::JNIEnv;
 use jni::objects::{JByteArray, JClass, JMap, JObject, JString};
@@ -8,12 +9,32 @@ use reqwest::{Client, Method, Url};
 use tokio::runtime::Runtime;
 
 static RUNTIME: Lazy<Runtime> = Lazy::new(|| Runtime::new().unwrap());
-static CLIENT: Lazy<Client> = Lazy::new(||
-    Client::builder()
-        .user_agent("Mozilla/5.0 (Windows NT 10.0; rv:102.0) Gecko/20100101 Firefox/102.0")
-        .build()
-        .unwrap()
-);
+static CLIENT: OnceLock<Client> = OnceLock::new();
+
+#[no_mangle]
+pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_init(
+    mut env: JNIEnv,
+    _: JClass,
+    proxy: JString,
+) {
+    let builder = Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; rv:102.0) Gecko/20100101 Firefox/102.0");
+
+    let builder = match env.get_string(&proxy) {
+        Ok(proxy) => {
+            let proxy = proxy.to_str().unwrap();
+            let proxy = reqwest::Proxy::all(proxy).unwrap();
+            builder.proxy(proxy)
+        }
+        Err(_) => {
+            builder
+        }
+    };
+
+    let client = builder.build()
+        .unwrap();
+    CLIENT.set(client).unwrap();
+}
 
 #[no_mangle]
 pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
@@ -48,7 +69,16 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
         );
     }
 
-    let request = CLIENT.request(method, url);
+    let client = CLIENT.get();
+
+    if client.is_none() {
+        env.throw_new("java/lang/IllegalStateException", "Client not initialized").unwrap();
+        return JObject::null().into_raw();
+    }
+
+    let client = client.unwrap();
+
+    let request = client.request(method, url);
 
     let request = headers.into_iter().fold(request, |request, (key, value)| {
         request.header(key, value)

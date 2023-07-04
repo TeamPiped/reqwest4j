@@ -35,6 +35,8 @@ public class ReqwestUtils {
         System.load(nativeFile.getAbsolutePath());
     }
 
+    public static native void init(String proxy);
+
     public static native CompletableFuture<Response> fetch(String url, String method, byte[] body,
                                                           Map<String, String> headers);
 

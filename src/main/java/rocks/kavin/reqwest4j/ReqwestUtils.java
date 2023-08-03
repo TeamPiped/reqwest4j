@@ -15,10 +15,25 @@ public class ReqwestUtils {
             default -> throw new RuntimeException("Unsupported architecture");
         };
 
+        String os = System.getProperty("os.name").toLowerCase();
+
+        String extension;
+        String native_folder;
+
+        if (os.contains("win")) {
+            extension = ".dll";
+            native_folder = "windows";
+        } else if (os.contains("linux")) {
+            extension = ".so";
+            native_folder = "linux";
+        } else {
+            throw new RuntimeException("OS not supported");
+        }
+
         File nativeFile;
 
         try {
-            nativeFile = File.createTempFile("libreqwest", ".so");
+            nativeFile = File.createTempFile("libreqwest", extension);
             nativeFile.deleteOnExit();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -26,7 +41,7 @@ public class ReqwestUtils {
 
         final var cl = ReqwestUtils.class.getClassLoader();
 
-        try (var stream = cl.getResourceAsStream("META-INF/natives/linux/" + arch + "/libreqwest.so")) {
+        try (var stream = cl.getResourceAsStream("META-INF/natives/" + native_folder + "/" + arch + "/libreqwest" + extension)) {
             stream.transferTo(new FileOutputStream(nativeFile));
         } catch (IOException e) {
             throw new RuntimeException(e);

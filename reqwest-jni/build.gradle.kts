@@ -8,4 +8,5 @@ rust {
 
     targets += target("aarch64-unknown-linux-gnu", "libreqwest.so")
     targets += target("x86_64-unknown-linux-gnu", "libreqwest.so")
+    targets += target("x86_64-pc-windows-msvc", "libreqwest.dll")
 }

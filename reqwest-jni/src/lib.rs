@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-use jni::JNIEnv;
 use jni::objects::{JByteArray, JClass, JMap, JObject, JString};
 use jni::sys::jobject;
+use jni::JNIEnv;
 use once_cell::sync::Lazy;
 use reqwest::{Client, Method, Url};
 use tokio::runtime::Runtime;
@@ -26,13 +26,10 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_init(
             let proxy = reqwest::Proxy::all(proxy).unwrap();
             builder.proxy(proxy)
         }
-        Err(_) => {
-            builder
-        }
+        Err(_) => builder,
     };
 
-    let client = builder.build()
-        .unwrap();
+    let client = builder.build().unwrap();
     CLIENT.set(client).unwrap();
 }
 
@@ -45,7 +42,6 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
     body: JByteArray,
     headers: JObject,
 ) -> jobject {
-
     // set method, url, body, headers
     let method = Method::from_bytes(env.get_string(&method).unwrap().to_bytes()).unwrap();
 
@@ -53,7 +49,11 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
     let url = url.to_str();
 
     if url.is_err() {
-        env.throw_new("java/lang/IllegalArgumentException", "Invalid URL provided, couldn't get string as UTF-8").unwrap();
+        env.throw_new(
+            "java/lang/IllegalArgumentException",
+            "Invalid URL provided, couldn't get string as UTF-8",
+        )
+        .unwrap();
         return JObject::null().into_raw();
     }
 
@@ -64,15 +64,24 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
     let mut headers = HashMap::new();
     while let Some((key, value)) = java_headers.next(&mut env).unwrap() {
         headers.insert(
-            env.get_string(&JString::from(key)).unwrap().to_str().unwrap().to_string(),
-            env.get_string(&JString::from(value)).unwrap().to_str().unwrap().to_string(),
+            env.get_string(&JString::from(key))
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            env.get_string(&JString::from(value))
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string(),
         );
     }
 
     let client = CLIENT.get();
 
     if client.is_none() {
-        env.throw_new("java/lang/IllegalStateException", "Client not initialized").unwrap();
+        env.throw_new("java/lang/IllegalStateException", "Client not initialized")
+            .unwrap();
         return JObject::null().into_raw();
     }
 
@@ -80,9 +89,9 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
 
     let request = client.request(method, url);
 
-    let request = headers.into_iter().fold(request, |request, (key, value)| {
-        request.header(key, value)
-    });
+    let request = headers
+        .into_iter()
+        .fold(request, |request, (key, value)| request.header(key, value));
 
     let request = if body.is_empty() {
         request
@@ -94,14 +103,14 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
     let jvm = env.get_java_vm().unwrap();
 
     // create CompletableFuture
-    let _future = env.new_object("java/util/concurrent/CompletableFuture", "()V", &[]).unwrap();
+    let _future = env
+        .new_object("java/util/concurrent/CompletableFuture", "()V", &[])
+        .unwrap();
     let future = env.new_global_ref(&_future).unwrap();
 
     RUNTIME.spawn_blocking(move || {
         // send request
-        let response = RUNTIME.block_on(async {
-            request.send().await
-        });
+        let response = RUNTIME.block_on(async { request.send().await });
 
         let mut env = jvm.attach_current_thread().unwrap();
 
@@ -109,12 +118,22 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
             let error = error.to_string();
             let error = env.new_string(error).unwrap();
             // create Exception
-            let exception = env.new_object("java/lang/Exception", "(Ljava/lang/String;)V", &[
-                (&error).into(),
-            ]).unwrap();
+            let exception = env
+                .new_object(
+                    "java/lang/Exception",
+                    "(Ljava/lang/String;)V",
+                    &[(&error).into()],
+                )
+                .unwrap();
             // pass error to CompletableFuture
-            env.call_method(future, "completeExceptionally", "(Ljava/lang/Throwable;)Z", &[(&exception).into()]).unwrap();
-            return ();
+            env.call_method(
+                future,
+                "completeExceptionally",
+                "(Ljava/lang/Throwable;)Z",
+                &[(&exception).into()],
+            )
+            .unwrap();
+            return;
         }
 
         let response = response.unwrap();
@@ -128,29 +147,41 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
         response.headers().iter().for_each(|(key, value)| {
             let key = env.new_string(key.as_str()).unwrap();
             let value = env.new_string(value.to_str().unwrap()).unwrap();
-            headers.put(&mut env, &JObject::from(key), &JObject::from(value)).unwrap();
+            headers
+                .put(&mut env, &JObject::from(key), &JObject::from(value))
+                .unwrap();
         });
 
         let final_url = response.url().to_string();
         let final_url = env.new_string(final_url).unwrap();
 
-        let body = RUNTIME.block_on(async {
-            response.bytes().await.unwrap_or_default().to_vec()
-        });
+        let body = RUNTIME.block_on(async { response.bytes().await.unwrap_or_default().to_vec() });
 
         let body = env.byte_array_from_slice(&body).unwrap();
 
         // return response to CompletableFuture
-        let response = env.new_object("rocks/kavin/reqwest4j/Response", "(ILjava/util/Map;[BLjava/lang/String;)V", &[
-            status.into(),
-            (&headers).into(),
-            (&body).into(),
-            (&final_url).into(),
-        ]).unwrap();
+        let response = env
+            .new_object(
+                "rocks/kavin/reqwest4j/Response",
+                "(ILjava/util/Map;[BLjava/lang/String;)V",
+                &[
+                    status.into(),
+                    (&headers).into(),
+                    (&body).into(),
+                    (&final_url).into(),
+                ],
+            )
+            .unwrap();
 
         let future = future.as_obj();
-        env.call_method(future, "complete", "(Ljava/lang/Object;)Z", &[(&response).into()]).unwrap();
+        env.call_method(
+            future,
+            "complete",
+            "(Ljava/lang/Object;)Z",
+            &[(&response).into()],
+        )
+        .unwrap();
     });
 
-    return _future.into_raw();
+    _future.into_raw()
 }

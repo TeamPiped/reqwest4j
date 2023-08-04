@@ -41,8 +41,8 @@ public class ReqwestUtils {
 
         final var cl = ReqwestUtils.class.getClassLoader();
 
-        try (var stream = cl.getResourceAsStream("META-INF/natives/" + native_folder + "/" + arch + "/libreqwest" + extension)) {
-            stream.transferTo(new FileOutputStream(nativeFile));
+        try (var stream = cl.getResourceAsStream("META-INF/natives/" + native_folder + "/" + arch + "/libreqwest" + extension); var fileOutputStream = new FileOutputStream(nativeFile)) {
+            stream.transferTo(fileOutputStream);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

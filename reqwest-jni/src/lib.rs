@@ -4,11 +4,10 @@ use std::sync::OnceLock;
 use jni::objects::{JByteArray, JClass, JMap, JObject, JString};
 use jni::sys::jobject;
 use jni::JNIEnv;
-use once_cell::sync::Lazy;
 use reqwest::{Client, Method, Url};
 use tokio::runtime::Runtime;
 
-static RUNTIME: Lazy<Runtime> = Lazy::new(|| Runtime::new().unwrap());
+static RUNTIME: OnceLock<Runtime> = OnceLock::new();
 static CLIENT: OnceLock<Client> = OnceLock::new();
 
 #[no_mangle]
@@ -31,6 +30,7 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_init(
 
     let client = builder.build().unwrap();
     CLIENT.set(client).unwrap();
+    RUNTIME.set(Runtime::new().unwrap()).unwrap();
 }
 
 #[no_mangle]
@@ -108,9 +108,11 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
         .unwrap();
     let future = env.new_global_ref(&_future).unwrap();
 
-    RUNTIME.spawn_blocking(move || {
+    let runtime = RUNTIME.get().unwrap();
+
+    runtime.spawn_blocking(move || {
         // send request
-        let response = RUNTIME.block_on(async { request.send().await });
+        let response = runtime.block_on(async { request.send().await });
 
         let mut env = jvm.attach_current_thread().unwrap();
 
@@ -155,7 +157,7 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_fetch(
         let final_url = response.url().to_string();
         let final_url = env.new_string(final_url).unwrap();
 
-        let body = RUNTIME.block_on(async { response.bytes().await.unwrap_or_default().to_vec() });
+        let body = runtime.block_on(async { response.bytes().await.unwrap_or_default().to_vec() });
 
         let body = env.byte_array_from_slice(&body).unwrap();
 

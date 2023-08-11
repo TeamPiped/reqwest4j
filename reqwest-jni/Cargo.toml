@@ -12,3 +12,6 @@ tokio = {version = "1.30.0", features = ["full"]}
 
 [lib]
 crate-type = ["cdylib"]
+
+[profile.release]
+lto = true

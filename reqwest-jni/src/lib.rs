@@ -15,6 +15,8 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_init(
     mut env: JNIEnv,
     _: JClass,
     proxy: JString,
+    user: JString,
+    pass: JString,
 ) {
     let builder = Client::builder()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; rv:102.0) Gecko/20100101 Firefox/102.0");
@@ -23,6 +25,15 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_init(
         Ok(proxy) => {
             let proxy = proxy.to_str().unwrap();
             let proxy = reqwest::Proxy::all(proxy).unwrap();
+            let proxy = match env.get_string(&user) {
+                Ok(user) => {
+                    let user = user.to_str().unwrap();
+                    let pass = env.get_string(&pass).unwrap();
+                    let pass = pass.to_str().unwrap();
+                    proxy.basic_auth(user, pass)
+                }
+                Err(_) => proxy,
+            };
             builder.proxy(proxy)
         }
         Err(_) => builder,

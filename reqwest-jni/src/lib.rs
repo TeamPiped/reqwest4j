@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::OnceLock;
+use std::time::Duration;
 
 use jni::objects::{JByteArray, JClass, JMap, JObject, JString};
 use jni::sys::jobject;
@@ -39,7 +40,13 @@ pub extern "system" fn Java_rocks_kavin_reqwest4j_ReqwestUtils_init(
         Err(_) => builder,
     };
 
-    let client = builder.build().unwrap();
+    let client = builder
+        // timeout for establishing connection
+        .connect_timeout(Duration::from_secs(10))
+        // timeout for entire request, till body is read
+        .timeout(Duration::from_secs(30))
+        .build()
+        .unwrap();
     CLIENT.set(client).unwrap();
     RUNTIME.set(Runtime::new().unwrap()).unwrap();
 }

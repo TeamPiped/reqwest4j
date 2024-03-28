@@ -14,7 +14,12 @@ jobs:
         java: [ 21 ]
     steps:
       - uses: actions/checkout@v4
-
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            reqwest-jni
+      - run: cargo install cross
       - name: set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:

@@ -3,7 +3,7 @@ plugins {
     id "maven-publish"
     id "signing"
     id "fr.stardustenterprises.rust.importer" version "3.2.5"
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 repositories {

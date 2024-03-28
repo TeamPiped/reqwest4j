@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 jni = "0.21.1"
 reqwest = {version = "0.12.2", features = ["rustls-tls", "stream", "brotli", "gzip", "socks"], default-features = false}
-tokio = {version = "1.36.0", features = ["rt-multi-thread", "time"], default-features = false}
+tokio = {version = "1.37.0", features = ["rt-multi-thread", "time"], default-features = false}
 
 [lib]
 crate-type = ["cdylib"]

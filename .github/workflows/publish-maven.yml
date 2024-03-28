@@ -22,8 +22,8 @@ jobs:
       - name: set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: 17
-          distribution: temurin
+          java-version: 21
+          distribution: zulu
           check-latest: true
           cache: "gradle"
       - name: Save Private Key

@@ -17,14 +17,14 @@ dependencies {
 // javac -h
 tasks.register('generateJniHeaders', JavaCompile) {
     classpath = sourceSets.main.compileClasspath
-    destinationDir file("${buildDir}/generated/jni")
+    destinationDir file("${layout.buildDirectory}/generated/jni")
     source = sourceSets.main.java
     options.compilerArgs += [
-            '-h', file("${buildDir}/generated/jni"),
-            '-d', file("${buildDir}/generated/jni-classes"),
+            '-h', file("${layout.buildDirectory}/generated/jni"),
+            '-d', file("${layout.buildDirectory}/generated/jni-classes"),
     ]
     doLast {
-        delete file("${buildDir}/generated/jni-classes")
+        delete file("${layout.buildDirectory}/generated/jni-classes")
     }
 }
 
@@ -36,6 +36,8 @@ rustImport {
 java {
     withSourcesJar()
     withJavadocJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 signing {
@@ -44,8 +46,6 @@ signing {
 
 group = 'rocks.kavin'
 version = '1.0.13'
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
 
 publishing {
     repositories {

@@ -26,6 +26,9 @@ public class ReqwestUtils {
         } else if (os.contains("linux")) {
             extension = ".so";
             native_folder = "linux";
+        } else if (os.contains("darwin")) {
+            extension = ".dylib";
+            native_folder = "darwin"; // or apple?
         } else {
             throw new RuntimeException("OS not supported");
         }

@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-jni = "0.21.1"
+jni = "0.22.0"
 reqwest = {version = "0.13.0", features = ["rustls-tls", "stream", "brotli", "gzip", "socks"], default-features = false}
 tokio = {version = "1.37.0", features = ["rt-multi-thread", "time"], default-features = false}
 
